@@ -1,6 +1,8 @@
 # flog
 personal blog ff
 
+-----------------
+仅用于记录日常pc笔记，非商用/学习用体系知识。往期blog：[传送门](https://blog.csdn.net/y1yo2)
 ## 目录
 
 ### 201811 ~ 201906
@@ -49,11 +51,15 @@ personal blog ff
 - [41待定Linux问题解决](https://github.com/y1yo2/flog/blob/master/docs/41待定Linux问题解决.md)
 - [42安装PLSQL](https://github.com/y1yo2/flog/blob/master/docs/42安装PLSQL.md)
 - [43MySQL知识补充](https://github.com/y1yo2/flog/blob/master/docs/43MySQL知识补充.md)
+- [44动态代理](https://github.com/y1yo2/flog/blob/master/docs/44动态代理.md)
+- [45反射实现getset例子](https://github.com/y1yo2/flog/blob/master/docs/45反射实现getset例子.md)
 - [a01Spring计划—spring5源码本地构建](https://github.com/y1yo2/flog/blob/master/docs/a01Spring计划—spring5源码本地构建.md)
 - [a02Spring计划—Bean是什么？](https://github.com/y1yo2/flog/blob/master/docs/a02Spring计划—Bean是什么？.md)
 - [a03Spring计划—容器初始化并注册Bean](https://github.com/y1yo2/flog/blob/master/docs/a03Spring计划—容器初始化并注册Bean.md)
-- [a04Spring计划—刷新容器上下文](https://github.com/y1yo2/flog/blob/master/docs/a04Spring计划—刷新容器上下文.md)
-
+- [a04Spring计划—刷新容器上下文（一）](https://github.com/y1yo2/flog/blob/master/docs/a04Spring计划—刷新容器上下文（一）.md)
+- [a05Spring计划—刷新容器上下文（二）](https://github.com/y1yo2/flog/blob/master/docs/a05Spring计划—刷新容器上下文（二）.md)
+- [a06Spring计划——doGetBean](https://github.com/y1yo2/flog/blob/master/docs/a06Spring计划——doGetBean.md)
+- [a08Spring计划—springmvc源码分析](https://github.com/y1yo2/flog/blob/master/docs/a08Spring计划—springmvc源码分析.md)
 
 
 
