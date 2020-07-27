@@ -1,8 +1,7 @@
 # flog
 personal blog ff
 
------------------
-仅用于记录日常pc笔记，非商用/学习用体系知识。往期blog：[传送门](https://blog.csdn.net/y1yo2)（mongodb、elatisearch、前端基础）
+
 ## 目录
 
 ### 201811 ~ 201906
@@ -65,4 +64,5 @@ personal blog ff
 
 
 
-
+-----------------
+仅用于记录日常pc笔记，非商用/学习用体系知识。往期blog：[传送门](https://blog.csdn.net/y1yo2)（mongodb、elatisearch、前端入门）
