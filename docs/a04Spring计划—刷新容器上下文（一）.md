@@ -343,7 +343,7 @@ beanFactory后置处理主要有两个功能：
 
 1.enhanceConfigurationClasses(beanFactory)
 
-在 postProcessBeanDefinitionRegistry 中，判断配置类：是否 @Configuration 注解，且proxyBeanMethods=true，则为Full配置类；否则，为LITE配置类
+在 postProcessBeanDefinitionRegistry 中，判断配置类：是否 @Configuration 注解，且proxyBeanMethods=true(默认)，则为Full配置类；否则，为LITE配置类
 
 收集所有**Full配置类**，加强beanDef中的Class。
 
@@ -463,6 +463,8 @@ do {
 }
 while (sourceClass != null);
 ```
+
+
 
 
 

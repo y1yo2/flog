@@ -93,6 +93,7 @@ DispatcherServlet 拿到 MAV 后，调用视图解析器 ViewResovlter，获得V
 					}
 				}
 
+                // interceptors
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
 					return;
 				}
@@ -574,6 +575,188 @@ private ModelAndView getModelAndView(ModelAndViewContainer mavContainer,
 
 
 
+## 拦截器与过滤器
+
+当一个请求进来的时候，会先执行各种filter，过滤掉最终需要的请求，然后会落到DispatcherServlet中的**doService()**方法。该方法是预先设置一些特殊请求参数，然后再转发给**doDispatch()**做真正的处理转发。
+
+通过 handlerMapping获得 handleradapter 后，处理拦截器，再通过Class获得Method.invoke(controllerBean, args)。
+
+
+
+TODO：源码分析
+
+拦截器：
+
+在 doDispatch() 的 getHandler 时，`AbstractHandlerMapping` 的 `getHandlerExecutionChain` 方法里，加载所有 HandlerInterceptor 的实现。自定义拦截器继承 `HandlerInterceptorAdapter`。
+
+
+
+过滤器：
+
+在 doService() 前调用 FilterChain的doFilter。自定义过滤器实现 `Filter`。
+
+
+
+filter 对 servlet进行request过滤，interceptor 对 mvc上下文过程的拦截。
+
+
+
+具体方法和对应进度：
+
+dofilter 对 servlet的request过滤，chain.doFilter(req, res)放行。
+
+doService，doDispath，preHandle()拦截，handlerAdapter.handle执行controller。
+
+postHandle()拦截，再返回ModeAndView。
+
+afterCompletion()拦截，dofilter 对 servlet的response过滤。
+
+
+
+Filter对servlet的请求和响应过滤，urlPatterns = "/*"设post置使用过滤器的url。
+
+Interceptor 对 MVC上下文的拦截，分别是 执行controller前，preHandle；执行后，postHandle；
+
+视图渲染后，afterCompletion。
+
+
+
+参考资料：
+
+手把手带你撕、拉、扯下 SpringMVC 的外衣: https://www.cnblogs.com/Java-Starter/p/10352802.html
+
+https://www.cnblogs.com/Java-Starter/p/10444617.html#autoid-1-0-0
+
+https://juejin.im/entry/6844903473960452104
+
+SpringMVC源码阅读：异常解析器 https://www.cnblogs.com/Java-Starter/p/10356055.html
+
+Spring Interceptor vs Filter: https://juejin.im/post/6844903828970553358
+
+Servlet 到 Spring MVC 的简化之路: 
+
+https://juejin.im/post/6844903570681135117
+
+Tomcat和Spring什么关系？SpringMVC和Servlet什么关系？
+
+https://zhuanlan.zhihu.com/p/65658315
+
+
+
+### 2020.08.12 补充 DispatcherServlet前发生了什么？
+
+### HandlerAdapter 和 Controller有哪些种类？
+
+Web容器首先调用HttpServlet的service方法，并根据请求的类型调用doGet或doPost方法。
+
+servlet: service(), doGet(), doPost(), doService(), doDispatch
+
+
+
+#### 关于 servlet：
+
+单例
+
+创建一次，初始化一次，销毁一次
+
+
+
+#### 关于 Tomcat 与 spring mvc
+
+Tomcat 一个叫Mapper的类，每一个URL要交给哪个Servlet处理，具体的映射规则都由一个映射器决定。默认都配置了JSPServlet(*.jsp)和DefaultServlet(/)处理JSP和静态资源。
+
+springmvc 的 DispatcherServlet配置/*，会覆盖处理所有 Tomcat请求。
+
+
+
+filters -> dispatcherServlet -> handlerMapping(url:controllrt.method) -> interceptors -> handleradapter -> handler controller
+
+
+
+#### 关于 handlermapping、handleradapter、handler
+
+HandlerMapping 拿到 url对应 handler，
+
+通过 handler搜索支持的 handleradapter，
+
+通过 handleradapter 执行 handler。
+
+实现 handler：
+
+1. 实现 Controller接口：implements Controller
+2. 实现 httpRequestHandler接口：implements HttpRequestHandler
+3. @RequestMapping 
+
+
+
+Spring MVC有三种映射策略：HandlerMapping
+
+简单url映射 -> SimpleUrlHandlerMapping
+BeanName映射 -> BeanNameUrlHandlerMapping
+@RequestMapping映射 -> RequestMappingHandlerMapping
+
+
+
+url映射：
+
+```java
+@Bean
+public SimpleUrlHandlerMapping simpleUrlHandlerMapping() {
+    SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
+    Map<String, Object> urlMap = new HashMap<>();
+    urlMap.put("/indexV2", "indexController");
+    mapping.setUrlMap(urlMap);
+    return mapping;
+    }
+```
+
+
+
+BeanName映射：
+
+@Component("/index/user")
+public class AController implements Controller
+
+
+
+@RequestMapping映射：
+
+1. spring容器在启动的时候，会拿到所有的bean，判断这个bean上是否有@Controller或者@RequestMapping注解，如果有则执行后面的步骤
+2. 解析类上的@RequestMapping注解，将其信息封装为RequestMappingInfo
+3. 将RequestMappingInfo及其对应的HandlerMethod注册到mappingLookup中
+4. 如果@RequestMapping指定的url没有通配符，则将url -> RequestMappingInfo注册到urlLookup中
+
+
+
+HandlerAdapter：
+
+当通过HandlerMapping找到Handler后，会依次调用handlerAdapters的supports方法，找到第一个返回true的HandlerAdapter，然后调用HandlerAdapter的handle方法，完成执行。
+
+
+
+HttpRequestHandlerAdapter -> 执行实现了HttpRequestHandler接口的Handler
+SimpleControllerHandlerAdapter -> 执行实现了Controller接口的Handler
+RequestMappingHandlerAdapter -> 执行Handler类型是HandlerMethod及其子类的Handler。
+
+> RequestMappingHandlerMapping返回的Handler是HandlerMethod类型
+
+
+
+HttpRequestHandlerAdapter:
+
+handle 方法 强转 handler为HttpRequestHandler，执行handler.handleRequest
+
+
+
+SimpleControllerHandlerAdapter:
+
+强转 handler为SimpleControllerHandlerAdapter
+
+
+
+RequestMappingHandlerAdapter支持Handler类型是HandlerMethod
+
+RequestMappingHandlerMapping返回的Handler是HandlerMethod
 
 
 
@@ -581,10 +764,15 @@ private ModelAndView getModelAndView(ModelAndViewContainer mavContainer,
 
 
 
+参考资料：
+
+springmvc中handlermapping与handleradapter：
+
+https://zhuanlan.zhihu.com/p/158226786
 
 
 
-
+https://juejin.im/post/6844904048810803207#hhandlerhandlermapping
 
 
 

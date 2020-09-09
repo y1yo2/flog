@@ -565,43 +565,247 @@ protected Object createBean(String beanName, RootBeanDefinition mbd, @Nullable O
 
 
 
+### doCreateBean
+
+1.实例化，对应方法：`AbstractAutowireCapableBeanFactory`中的`createBeanInstance`方法。
+
+```java
+return autowireConstructor(beanName, mbd, ctors, null);
+
+// No special handling: simply use no-arg constructor.
+return instantiateBean(beanName, mbd);
+```
+
+没有特别设定，则使用默认无参构造函数。
+
+`SimpleInstantiationStrategy` 的`instantiate` 方法。
+
+如果没有重写方法，**使用反射执行无参构造函数** `constructorToUse = clazz.getDeclaredConstructor();`
+
+如果有override ,Must generate CGLIB subclass，**通过cglib代理**生成。
+
+
+
+2.实例化后，虽然还**未执行 populateBean**注入属性，但是Spring认为可复用并addSingletonFactory **加入三级缓存singletonFactory**。
+
+```java
+protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
+   Assert.notNull(singletonFactory, "Singleton factory must not be null");
+   synchronized (this.singletonObjects) {
+      if (!this.singletonObjects.containsKey(beanName)) {
+         this.singletonFactories.put(beanName, singletonFactory);
+         this.earlySingletonObjects.remove(beanName);
+         this.registeredSingletons.add(beanName);
+      }
+   }
+}
+```
+
+
+
+3.populateBean
+
+如果A **autowired** 了B，A执行populateBean时，会调用getBean(B)，把B初始化完全后，再接着初始化A。
+
+```java
+// Add property values based on autowire by name if applicable.
+if (resolvedAutowireMode == AUTOWIRE_BY_NAME) {
+   autowireByName(beanName, mbd, bw, newPvs);
+}
+// Add property values based on autowire by type if applicable.
+if (resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
+   autowireByType(beanName, mbd, bw, newPvs);
+}
+```
+
+@Autowired 默认使用类型
+
+
+
+# 循环依赖详解
+
+参考资料：https://juejin.im/post/6844903715602694152#heading-11
+
+https://mp.weixin.qq.com/s/kS0K5P4FdF3v-fiIjGIvvQ
+
+
+
+```java
+// Eagerly check singleton cache for manually registered singletons.
+// 根据beanName尝试从singletonObjects获取Bean
+// 获取不到则再尝试从earlySingletonObjects,singletonFactories 从获取Bean
+// 这段代码和解决循环依赖有关
+Object sharedInstance = getSingleton(beanName);
+
+// Fail if we're already creating this bean instance:
+// We're assumably within a circular reference.
+// 判断是否循环依赖
+if (isPrototypeCurrentlyInCreation(beanName)) {
+    throw new BeanCurrentlyInCreationException(beanName);
+}
+```
+
+
+
+通过这两部分代码解决循环依赖问题。
+
+```java
+一级缓存：
+/** 保存所有的singletonBean的实例 */
+private final Map<String, Object> singletonObjects = new ConcurrentHashMap<String, Object>(64);
+
+二级缓存：
+/** 保存所有早期创建的Bean对象，这个Bean还没有完成依赖注入 */
+private final Map<String, Object> earlySingletonObjects = new HashMap<String, Object>(16);
+三级缓存：
+/** singletonBean的生产工厂*/
+private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<String, ObjectFactory<?>>(16);
+ 
+/** 保存所有已经完成初始化的Bean的名字（name） */
+private final Set<String> registeredSingletons = new LinkedHashSet<String>(64);
+ 
+/** 标识指定name的Bean对象是否处于创建状态  这个状态非常重要 */
+private final Set<String> singletonsCurrentlyInCreation =
+	Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>(16));
+
+```
+
+
+
+“请讲一讲Spring中的循环依赖。”
+
+主要分下面几点
+
+1. 什么是循环依赖？
+2. 什么情况下循环依赖可以被处理？
+3. Spring是如何解决的循环依赖？
+
+1.A依赖B的同时B也依赖了A。
+
+
+
+2.Spring解决循环依赖的前置条件：
+
+1. 发生循环依赖的bean必须是单例
+2. 首个加载的bean，依赖注入的方式不能是构造器注入。
+
+
+
+3.如何解决?
+
+1. `getSingleton(beanName, true)` 到缓存中尝试去获取Bean，整个缓存分为三级
+
+   1. `singletonObjects`，一级缓存，存储的是所有创建好了的单例Bean
+   2. `earlySingletonObjects`，完成实例化，但是还未进行属性注入及初始化的对象
+   3. `singletonFactories`，提前暴露的一个单例工厂，二级缓存中存储的就是从这个工厂中获取到的对象
+
+2. `createBean`方法创建Bean并返回，最终被放到了一级缓存，也就是单例池中。
+
+   1. `createBean` 时，`instantiateBean` 通过反射或者cglib执行默认无参构造函数初始化Bean，然后将Bean包装成一个工厂添加进了三级缓存中。
+
+      通过这个工厂（`ObjectFactory`）的`getObject`方法得到一个对象，还未注入属性的Bean A。
+
+   2. `populateBean` 为A注入属性时，发现A依赖了B，去`getBean(b)`，然后反射调用setter方法完成属性注入。
+
+   3. `getBean(b)` 流程一样，但是 `getSingleton` 时，可以拿到三级缓存中的 获得A的工厂。
+
+   4. 最后如果二级缓存有值则返回二级缓存的值。
+
+3. 三级缓存中，工厂的逻辑，A是通过`getEarlyBeanReference`方法提前暴露出去的一个对象。
+
+   1. 三级缓存工厂与 AOP的关系：
+
+      当通过`@EnableAspectJAutoProxy`注解导入的`AnnotationAwareAspectJAutoProxyCreator`。
+
+      则调用`AnnotationAwareAspectJAutoProxyCreator`的`getEarlyBeanReference`方法。
+
+      ```java
+      public Object getEarlyBeanReference(Object bean, String beanName) {
+          Object cacheKey = getCacheKey(bean.getClass(), beanName);
+          this.earlyProxyReferences.put(cacheKey, bean);
+          // 如果需要代理，返回一个代理对象，不需要代理，直接返回当前传入的这个bean对象
+          return wrapIfNecessary(bean, beanName, cacheKey);
+      }
+      ```
+
+   2. 当 A开启AOP后，B注入循环依赖A，是从三级缓存获取的 A的代理，并将A加入到二级缓存，然后删除掉三级缓存的工厂。
+
+
+
+正常的 spring AOP 流程：
+
+Spring结合`AOP`跟Bean的生命周期本身就是通过`AnnotationAwareAspectJAutoProxyCreator`这个后置处理器来完成的，在这个后置处理的`postProcessAfterInitialization`方法中对初始化后的Bean完成`AOP`代理。
+
+
+
+总结：
+
+Spring通过三级缓存解决了循环依赖，其中一级缓存为单例池（`singletonObjects`）,二级缓存为早期曝光对象`earlySingletonObjects`，三级缓存为早期曝光对象工厂（`singletonFactories`）。
+
+当A、B两个类发生循环引用时，在A完成实例化后，创建一个实例化后的对象工厂，并添加到三级缓存中。
+
+当A进行属性注入时，会去创建B，同时B又依赖了A，创建B又会调用getBean(a)来获取需要的依赖，此时的getBean(a)会从缓存中获取：
+
+第一步，先获取到三级缓存中的工厂；
+
+第二步，调用对象工工厂的getObject方法来获取到对应的对象，得到这个对象后将其注入到B中。紧接着B会走完它的生命周期流程，包括初始化、后置处理器等。
+
+当B创建完后，会将B再注入到A中，此时A再完成它的整个生命周期。至此，循环依赖结束！
+
+如果A被AOP代理，那么通过这个工厂获取到的就是A代理后的对象，如果A没有被AOP代理，那么这个工厂获取到的就是A实例化的对象。
+
+
+
+”为什么要使用三级缓存呢？二级缓存能解决循环依赖吗？“
+
+如果要使用二级缓存解决循环依赖，意味着所有Bean在实例化后就要完成AOP代理，这样违背了Spring设计的原则，Spring在设计之初就是通过`AnnotationAwareAspectJAutoProxyCreator`这个后置处理器来在Bean生命周期的最后一步来完成AOP代理，而不是在实例化后就立马进行AOP代理。
+
+
+
+## 通过这次分析refresh的学习成果：
+
+spring定义了多种bean的作用域，常用的4种如下：
+
+1. 单例(Singleton)：在整个应用中，只创建bean的一个实例。
+2. 原型(Prototype)：每次注入或者通过Spring应用上下文获取的时候，都会创建一个新的bean实例。
+3. 会话(Session)：在Web应用中，为每个会话创建一个bean实例。
+4. 请求(Request)：在Web应用中，为每个请求创建一个bean实例。
+
+@Scope设置。@Lazy设置延迟加载。
 
 
 
 
 
+`synchronized (this.startupShutdownMonitor) `
+
+1、方法为什么加锁？避免多线程**并发刷新**Spring上下文
+
+2、虽然整个方法是加锁的，但是却用了Synchronized关键字的对象锁startUpShutdownMonitor，这样做有两个好处：
+
+（1）关闭资源的时候会调用close()方法，close()方法使用了同样的对象锁，**避免close和refresh的两个方法冲突**。
+
+（2）此处对象锁相对于整个方法加锁的话，同步的范围更小了，锁的粒度更小，效率更高
 
 
 
+| **对象名**            | **类 型** | **作 用**                               | **归属类**                   |
+| --------------------- | --------- | --------------------------------------- | ---------------------------- |
+| singletonObjects      | Map       | 存储单例Bean名称->单例Bean实现映射关系  | DefaultSingletonBeanRegistry |
+| singletonFactories    | Map       | 存储Bean名称->ObjectFactory实现映射关系 | DefaultSingletonBeanRegistry |
+| earlySingletonObjects | Map       | 存储Bean名称->预加载Bean实现映射关系    | DefaultSingletonBeanRegistry |
 
 
 
+BeanDefinition在IOC容器中的注册
 
+1、初始化**BeanDefinitionReader**
 
+2、通过BeanDefinitionReader获取Resource，也就是xml配置文件的位置，并且把文件转换成一个叫Document的对象
 
+3、接下来需要将Document对象转化成容器内部的数据结构（也就是BeanDefinition），也即是将Bean定义的List、Map、Set等各种元素进行解析，转换成Managed类（Spring对BeanDefinition数据的封装)放在BeanDefinition中；这个方法是RegisterBeanDefinition()，也就是解析的过程。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+4、解析完成后，会把解析的结果放到BeanDefinition对象中并设置到一个Map中
 
 
 
