@@ -52,6 +52,14 @@ personal blog ff
 - [43MySQL知识补充](https://github.com/y1yo2/flog/blob/master/docs/43MySQL知识补充.md)
 - [44动态代理](https://github.com/y1yo2/flog/blob/master/docs/44动态代理.md)
 - [45反射实现getset例子](https://github.com/y1yo2/flog/blob/master/docs/45反射实现getset例子.md)
+- [46MySQL存储过程与存储函数](https://github.com/y1yo2/flog/blob/master/docs/46MySQL存储过程与存储函数.md)
+- [47MySQL骚查询](https://github.com/y1yo2/flog/blob/master/docs/47MySQL骚查询.md)
+- [48Scheduled线程池](https://github.com/y1yo2/flog/blob/master/docs/48Scheduled线程池.md)
+- [49Linux基础](https://github.com/y1yo2/flog/blob/master/docs/49Linux基础.md)
+- [50MySQL引擎与建表规范](https://github.com/y1yo2/flog/blob/master/docs/50MySQL引擎与建表规范.md)
+- [51控制线程的方法详解](https://github.com/y1yo2/flog/blob/master/docs/51控制线程的方法详解.md)
+- [52力扣心得](https://github.com/y1yo2/flog/blob/master/docs/52力扣心得.md)
+- [53nginx正经整理（一）](https://github.com/y1yo2/flog/blob/master/docs/53nginx正经整理（一）.md)
 - [a01Spring计划—spring5源码本地构建](https://github.com/y1yo2/flog/blob/master/docs/a01Spring计划—spring5源码本地构建.md)
 - [a02Spring计划—Bean是什么？](https://github.com/y1yo2/flog/blob/master/docs/a02Spring计划—Bean是什么？.md)
 - [a03Spring计划—容器初始化并注册Bean](https://github.com/y1yo2/flog/blob/master/docs/a03Spring计划—容器初始化并注册Bean.md)
@@ -59,6 +67,10 @@ personal blog ff
 - [a05Spring计划—刷新容器上下文（二）](https://github.com/y1yo2/flog/blob/master/docs/a05Spring计划—刷新容器上下文（二）.md)
 - [a06Spring计划——doGetBean](https://github.com/y1yo2/flog/blob/master/docs/a06Spring计划——doGetBean.md)
 - [a08Spring计划—springmvc源码分析](https://github.com/y1yo2/flog/blob/master/docs/a08Spring计划—springmvc源码分析.md)
+- [a09Spring计划—@Autowired](https://github.com/y1yo2/flog/blob/master/docs/a09Spring计划—%40Autowired.md)
+- [a10Spring计划—IOC注解](https://github.com/y1yo2/flog/blob/master/docs/a10Spring计划—IOC注解.md)
+- [a12Spring计划—springboot源码分析](https://github.com/y1yo2/flog/blob/master/docs/a12Spring计划—springboot源码分析.md)
+- [z03微信支付与扫码支付](https://github.com/y1yo2/flog/blob/master/docs/z03微信支付与扫码支付.md)
 
 
 
@@ -66,3 +78,5 @@ personal blog ff
 
 -----------------
 仅用于记录日常pc笔记，非商用/学习用体系知识。往期blog：[传送门](https://blog.csdn.net/y1yo2)（mongodb、elatisearch、前端入门）
+
+体系学习推荐使用笔记本(๑╹◡╹)ﾉ"""
