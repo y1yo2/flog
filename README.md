@@ -4,7 +4,7 @@ personal blog ff
 
 ## 目录
 
-### 201811 ~ 201906
+### 201811 ~ 201908
 
 - [01java字符串连接](https://github.com/y1yo2/flog/blob/master/docs/01java字符串连接.md)
 - [02邮件协议，左右移](https://github.com/y1yo2/flog/blob/master/docs/02邮件协议，左右移.md)
@@ -79,4 +79,4 @@ personal blog ff
 -----------------
 仅用于记录日常pc笔记，非商用/学习用体系知识。往期blog：[传送门](https://blog.csdn.net/y1yo2)（mongodb、elatisearch、前端入门）
 
-体系学习推荐使用笔记本(๑╹◡╹)ﾉ"""
+体系学习推荐使用 (๑╹◡╹)ﾉ"""笔记本""
